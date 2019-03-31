@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Live Chat</title>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Sans:400,700">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+	<script type="text/javascript">
+		var accessToken = "5c87b075d7b64cc4b88ee0a64183bf21";
+		var baseUrl = "https://api.api.ai/v1/";
+		$(document).ready(function() {
+			$("#input").keypress(function(event) {
+				if (event.which == 13) {
+					$('.chat-message').append('<span class="userInput"><img src="/chatwindow/me.png" alt="" width="32" height="32">&emsp;' + 'Me :'+ $('input').val() + '</span><br><br>')
+					event.preventDefault();
+					let query  = $('input').val()
+					$('input').val('')
+					send(query);
+				}
+			});
+		});
+	
+		function send(query) {
+			var text = query;
+			$.ajax({
+				type: "POST",
+				url: baseUrl + "query?v=20180101",
+				contentType: "application/json; charset=utf-8",
+				dataType: "json",
+				headers: {
+					"Authorization": "Bearer " + accessToken
+				},
+				data: JSON.stringify({ query: text, lang: "en", sessionId: "somerandomthing" }),
+				success: function(data) {
+					setResponse(data);
+				}
+			});
+		}
+		function setResponse(val) {
+			$(".chat-message").append('<span class="responseData"><img src="/chatwindow/you.png" alt="" width="32" height="32">&emsp;'+ 'JP :' + val.result.fulfillment.speech + '</span><br><br>');
+		}
+	</script>
+	<style type="text/css">
+		.userInput{float: left;}
+		.responseData{float:right};
+		#input { width: 500px; }
+	</style>
+	<link href="chatbot.css" rel="stylesheet" >
+</head>
+<body>
+	<div id="live-chat">
+		<header class="clearfix">
+			<a href="#" class="chat-close">x</a>
+			<h4>YourBot</h4>
+		</header>
+		<div class="chat">
+			<div class="chat-history">
+				<div class="chat-message clearfix">
+				</div>
+				<hr>
+			</div>
+			<form action="#" method="post">
+				<fieldset>
+					<input id='input' type="text" placeholder="Type your message…" autofocus>
+					<input type="hidden">
+				</fieldset>
+			</form>
+		</div>
+	</div>
+</body>
+</html>

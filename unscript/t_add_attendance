@@ -1,0 +1,291 @@
+<?php
+session_start();
+if(!isset($_SESSION['teacher_id']))
+{
+    echo '<script language="javascript">';
+    echo "if(!alert('You Must Be Logged In To Access This Page')) document.location = 'index.php'";
+    echo '</script>';
+}
+
+require('assets/include/connect.php');
+
+
+if (isset($_POST['submit']) && !isset($_GET['eventid']))
+{
+    $ename = $_POST['ename'];
+    $place = $_POST['place'];
+    $shortdesc = $_POST['shortdesc'];
+    $edate = $_POST['edate'];
+
+    $edarr = explode('-',$edate);
+
+    $nmonth = $edarr['1'];
+    $month = date("F", mktime(0, 0, 0, $nmonth, 10));
+
+    $etime = $_POST['etime'];
+
+    $target_dir = 'api/upload/';
+
+    if ($_FILES['eventimg']['name'] != "")
+    {
+
+        $sfilename = trim(addslashes($_FILES['eventimg']['name']));
+
+        $aname = str_replace(' ', '_', $sfilename);
+
+
+        $event_file = $target_dir .$aname;
+        $auploadOk = 1;
+        $audioFileType = pathinfo($event_file,PATHINFO_EXTENSION);
+// Check if image file is a actual image or fake image
+
+// Check if file already exists
+        if (file_exists($event_file)) {
+//        echo "Sorry, file already exists.";
+            $auploadOk = 0;
+        }
+// Allow certain file formats
+        if($audioFileType != "jpg" && $audioFileType != "jpeg" ) {
+//        echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
+            $auploadOk = 0;
+        }
+// Check if $uploadOk is set to 0 by an error
+        if ($auploadOk == 0) {
+//        echo "Sorry, your file was not uploaded.";
+// if everything is ok, try to upload file
+        } else {
+            if (move_uploaded_file($_FILES["eventimg"]["tmp_name"], $event_file)) {
+//            echo "The Audio file ".$aname. " has been uploaded.";
+            } else {
+//            echo "Sorry, there was an error uploading your file.";
+            }
+        }
+
+        $event_file = $event_file;
+    }
+    else
+    {
+        $event_file = '';
+
+    }
+
+    $query = "INSERT INTO `event` (name, place, shortdesc, edate, month, time, eventimg) VALUES ('$ename', '$place', '$shortdesc', '$edate', '$month', '$etime', '$event_file')";
+    $result = mysqli_query($conn, $query);
+    if($result){
+        $nvar = 'An Event Has Been Added';
+        notifyfunc($nvar);
+        echo '<script language="javascript">';
+        echo 'if(!alert("Event Added Successfully")) document.location = "viewevents.php";';
+        echo '</script>';
+    }else{
+        echo '<script language="javascript">';
+        echo 'alert("Event Addition Failed")';
+        echo '</script>';
+    }
+
+}
+
+if (isset($_GET['eventid']))
+{
+    $id = $_GET['eventid'];
+
+    $sql = "SELECT * FROM `event` WHERE id='$id'";
+    $tres = mysqli_query($conn, $sql) or die(mysqli_error($conn));
+    $tdata = mysqli_fetch_assoc($tres);
+}
+
+if (isset($_GET['eventid']) && isset($_POST['submit']))
+{
+    $id = $_GET['eventid'];
+
+    $ename = $_POST['ename'];
+    $place = $_POST['place'];
+    $shortdesc = $_POST['shortdesc'];
+    $edate = $_POST['edate'];
+
+    $edarr = explode('-',$edate);
+
+    $nmonth = $edarr['1'];
+    $month = date("F", mktime(0, 0, 0, $nmonth, 10));
+
+    $etime = $_POST['etime'];
+
+    $target_dir = 'http://kvls.in/api/upload/';
+
+    if ($_FILES['eventimg']['name'] != "")
+    {
+        unlink($tdata['eventimg']);
+
+        $sfilename = trim(addslashes($_FILES['eventimg']['name']));
+
+        $aname = str_replace(' ', '_', $sfilename);
+
+
+        $event_file = $target_dir .$aname;
+        $auploadOk = 1;
+        $audioFileType = pathinfo($event_file,PATHINFO_EXTENSION);
+// Check if image file is a actual image or fake image
+
+// Check if file already exists
+        if (file_exists($event_file)) {
+//        echo "Sorry, file already exists.";
+            $auploadOk = 0;
+        }
+// Allow certain file formats
+        if($audioFileType != "jpg" && $audioFileType != "jpeg" ) {
+//        echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
+            $auploadOk = 0;
+        }
+// Check if $uploadOk is set to 0 by an error
+        if ($auploadOk == 0) {
+//        echo "Sorry, your file was not uploaded.";
+// if everything is ok, try to upload file
+        } else {
+            if (move_uploaded_file($_FILES["eventimg"]["tmp_name"], $event_file)) {
+//            echo "The Audio file ".$aname. " has been uploaded.";
+            } else {
+//            echo "Sorry, there was an error uploading your file.";
+            }
+        }
+
+
+    }
+    else
+    {
+        $event_file = $tdata['eventimg'];
+
+    }
+
+    $sql = "UPDATE event SET name='$ename', place='$place', shortdesc='$shortdesc', edate='$edate', month='$month', time='$etime', eventimg='$event_file' WHERE id=$id";
+    $ressql = mysqli_query($conn, $sql) or die(mysqli_error($conn));
+
+
+    if ($ressql)
+    {
+        $nuvar = 'An Event Has Been Updated';
+        notifyfunc($nuvar);
+        echo '<script language="javascript">';
+        echo "if(!alert('Event Edited Successfully')) document.location = 'viewevents.php'";
+        echo '</script>';
+    }
+    else
+    {
+        echo '<script language="javascript">';
+        echo "if(!alert('Error Editing Event)) document.location = 'editproduct.php?id='".$id."";
+        echo '</script>';
+    }
+
+}
+
+?>
+<!doctype html>
+<html lang="en" class="loading loading-primary">
+
+<head>
+    <meta charset="utf-8">
+    <title>Add Attendance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <?php include 'assets/include/css.php';?>
+
+    <!-- endbuild -->
+</head>
+<body id="forms-date-picker" data-layout="fixed-navbar-1" data-sidebar="primary" data-navbar="primary" data-controller="forms" data-view="date-picker">
+<div id="fakeloader"></div>
+
+<!-- navbar -->
+<?php include 'assets/include/i-t-nav.php';?>
+<!-- navbar -->
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- left sidebar -->
+        <?php include 'assets/include/i-sidebar.php';?>
+        <!-- left sidebar -->
+
+        <!-- jumbotron -->
+        <div class="jumbotron-3">
+            <div class="jumbotron jumbotron-fluid">
+                <div class="container-fluid">
+                    <h1 class="display-3">Add Attendance</h1>
+                    <ol class="breadcrumb icon-home icon-angle-right no-bg">
+                        <li>
+                            <a href="dashboard.php">
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="active">
+                            Add Attendance</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <!-- jumbotron -->
+
+        <div class="col-xs-12 main">
+            <div class="page-on-top">
+                <!-- forms/date-picker -->
+                <div class="row">
+                    <div class="col-xs-12 col-xl-12">
+                        <form method="POST" action="#" enctype="multipart/form-data" name="acustform">
+                            
+                            <table class="table" data-filtering="true" data-sorting="true" data-paging="true" data-filtering-delay="0" id="ptable">
+
+                                        <thead>
+                                        <tr>
+                                            <th data-breakpoints="xs">ID</th>
+                                            <th data-breakpoints="xs sm md">Student Name</th>
+                                            <th data-breakpoints="xs sm md">Marks</th>
+                                            <th data-breakpoints="xs sm md">Percentage</th>
+                                            <!-- <th data-breakpoints="xs sm md">Semester</th> -->
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+
+                                        <?php
+                                        $i = 1;
+                                        $average_mrks = 0;
+                                        while($data_marks = $res_marks -> fetch_assoc()){
+                                               // $sub_id = $data_marks['sub_id'];
+                                               // $query_subject="SELECT * FROM `subject` WHERE sub_id = '$sub_id'";
+                                               //  $res_subject=mysqli_query($conn,$query_subject) or die(mysqli_error($conn));
+                                               //  $data_subject = $res_subject -> fetch_assoc();
+                                                // $average_mrks = $average_mrks + $data_marks['marks'];
+                                                ?>
+
+                                            <tr class="tablerow<?php echo $data['id'];?>">
+                                                <td><?php echo $i;?></td>
+                                                <td><?php echo $data_marks['sub_name'];?></td>
+                                                <td><?php echo $data_marks['mrk'];?></td>
+                                                <td><?php echo $data_marks['mrk'];?>%</td>
+                                                <!-- <td><?php //echo $data_marks['a_sem'];?></td> -->
+
+
+                                                <?php $i++;?>
+
+                                            </tr>
+                                        <?php }?>
+
+                                        </tbody>
+                                    </table>
+
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary btn-lg btn-block" name="submit">Submit<div class="ripple-container"></div></button>
+                            </div>
+
+                        </form>
+                    </div>
+
+                </div>
+                <!-- forms/date-picker -->
+            </div>
+        </div>
+    </div>
+</div>
+<?php include 'assets/include/scripts.php';?>
+<!-- endbuild -->
+<div class="left-sidebar-backdrop"></div>
+<div class="right-sidebar-backdrop"></div>
+<div class="top-search-backdrop"></div>
+</body>
+
+</html>

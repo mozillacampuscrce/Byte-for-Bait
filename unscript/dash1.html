@@ -1,0 +1,39 @@
+<!DOCTYPE>
+<!DOCTYPE html>
+<html>
+<head>
+<title>DashBoard1</title>
+
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>  
+
+
+<script type="text/javascript">
+$(document).ready(function () {
+
+    $.getJSON("data.php", function (result) {
+        console.log(result);
+        var chart = new CanvasJS.Chart("barchart", {
+            exportEnabled:true,
+            animationEnabled:true,
+            animationDuration : 5000,
+            title:{ text:"Attendance"},
+            data: [
+            {
+                type : "line",
+                dataPoints: result
+            }
+            ]
+        });
+
+        chart.render();
+    });
+});
+</script>
+</head>
+<body>
+    <div id="barchart" style="height: 500px; width: 640px; overflow: auto; float: left;">
+        
+    </div>
+</body>
+</html>
